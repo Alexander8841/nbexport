@@ -1,50 +1,88 @@
 import argparse
 import os
 import glob
-import time
 from .exporter import export_notebook
-from .watcher import start_watching
-from .utils import log_success, log_error
+from .importer import import_to_notebook
+from .watcher import start_watching, find_file_recursively
+from .utils import log_success, log_error, log_info
 
 def main_export():
-    parser = argparse.ArgumentParser(description="NBExport - Конвертация Jupyter Notebook в Python скрипт для LLM.")
-    parser.add_argument('-i', '--input', type=str, help="Путь к исходному .ipynb файлу или директории. По умолчанию - текущая папка.")
-    parser.add_argument('-o', '--output', type=str, help="Путь к результирующему .py файлу (только если конвертируется один файл).")
+    parser = argparse.ArgumentParser(description="Экспорт Jupyter Notebook (.ipynb) в чистый Python-скрипт с аутпутами.")
+    parser.add_argument("-i", "--input", help="Путь или имя файла .ipynb (по умолчанию все .ipynb в текущей папке)")
+    parser.add_argument("-o", "--output", help="Путь для сохранения .py файла")
     args = parser.parse_args()
-    
-    input_path = args.input or os.getcwd()
-    
-    if os.path.isdir(input_path):
-        notebooks = glob.glob(os.path.join(input_path, '*.ipynb'))
-    elif input_path.endswith('.ipynb') and os.path.exists(input_path):
-        notebooks = [input_path]
-    else:
-        notebooks = []
-        
-    if not notebooks:
-        print(f"Не найдено .ipynb файлов по пути: {input_path}")
-        return
-        
-    for nb in notebooks:
-        if args.output and len(notebooks) == 1:
-            out_file = args.output
-        else:
-            out_file = os.path.splitext(nb)[0] + '_exported.py'
+
+    if args.input:
+        resolved, matches = find_file_recursively(args.input)
+        if matches:
+            log_error(f"Найдено несколько файлов с именем '{args.input}':")
+            for m in matches:
+                print(f"  • {os.path.relpath(m, '.')}")
+            return
+        if not resolved:
+            log_error(f"Файл '{args.input}' не найден в текущей папке и её подкаталогах.")
+            return
             
         try:
-            start = time.time()
-            export_notebook(nb, out_file)
-            duration = time.time() - start
-            log_success(f"{os.path.basename(nb)} -> {os.path.basename(out_file)}", duration)
+            out = args.output if args.output else os.path.splitext(resolved)[0] + '_exported.py'
+            export_notebook(resolved, out)
+            log_success(f"Экспортирован: {os.path.relpath(resolved, '.')} -> {os.path.relpath(out, '.')}")
         except Exception as e:
-            log_error(f"{os.path.basename(nb)}", str(e))
+            log_error(f"Ошибка экспорта {args.input}", str(e))
+    else:
+        files = glob.glob("*.ipynb")
+        if not files:
+            log_info("В текущей папке не найдено файлов .ipynb")
+            return
+        for f in files:
+            try:
+                out = os.path.splitext(f)[0] + '_exported.py'
+                export_notebook(f, out)
+                log_success(f"Экспортирован: {f} -> {out}")
+            except Exception as e:
+                log_error(f"Ошибка экспорта {f}", str(e))
+
+def main_import():
+    parser = argparse.ArgumentParser(description="Обратный импорт из Python-скрипта (_exported.py) в Jupyter Notebook (.ipynb).")
+    parser.add_argument("-i", "--input", help="Путь или имя файла _exported.py (по умолчанию все *_exported.py в текущей папке)")
+    parser.add_argument("-o", "--output", help="Путь для сохранения .ipynb файла")
+    args = parser.parse_args()
+
+    if args.input:
+        resolved, matches = find_file_recursively(args.input)
+        if matches:
+            log_error(f"Найдено несколько файлов с именем '{args.input}':")
+            for m in matches:
+                print(f"  • {os.path.relpath(m, '.')}")
+            return
+        if not resolved:
+            log_error(f"Файл '{args.input}' не найден в текущей папке и её подкаталогах.")
+            return
+            
+        try:
+            out = args.output if args.output else (resolved[:-12] + '.ipynb' if resolved.endswith('_exported.py') else os.path.splitext(resolved)[0] + '.ipynb')
+            import_to_notebook(resolved, out)
+            log_success(f"Импортирован: {os.path.relpath(resolved, '.')} -> {os.path.relpath(out, '.')}")
+        except Exception as e:
+            log_error(f"Ошибка импорта {args.input}", str(e))
+    else:
+        files = glob.glob("*_exported.py")
+        if not files:
+            log_info("В текущей папке не найдено файлов *_exported.py")
+            return
+        for f in files:
+            try:
+                out = f[:-12] + '.ipynb'
+                import_to_notebook(f, out)
+                log_success(f"Импортирован: {f} -> {out}")
+            except Exception as e:
+                log_error(f"Ошибка импорта {f}", str(e))
 
 def main_watch():
-    parser = argparse.ArgumentParser(description="NBWatch - Автоматическое слежение и конвертация Jupyter Notebooks.")
-    parser.add_argument('path', nargs='?', type=str, default='.', help="Папка для слежения. По умолчанию - текущая папка.")
+    parser = argparse.ArgumentParser(description="Фоновый 2-way sync между .ipynb и *_exported.py файлами.")
+    parser.add_argument("path", nargs="?", default=None, help="Папка или имя файла для отслеживания")
+    parser.add_argument("-i", "--input", help="Конкретный файл (.ipynb или _exported.py) для отслеживания")
     args = parser.parse_args()
     
-    start_watching(args.path)
-
-if __name__ == '__main__':
-    main_export()
+    target = args.input or args.path or "."
+    start_watching(target)

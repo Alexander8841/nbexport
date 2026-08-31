@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nbexport"
-version = "0.1.0"
-description = "Export Jupyter Notebooks to LLM-friendly Python files."
-authors = [{name = "Antigravity", email = "no-reply@gemini.com"}]
+version = "0.2.0"
+description = "Bidirectional 2-way sync between Jupyter Notebooks and LLM-friendly Python scripts with outputs."
+authors = [{name = "Alexander", email = "no-reply@gemini.com"}]
 dependencies = [
     "watchdog>=3.0.0"
 ]
@@ -14,4 +14,5 @@ requires-python = ">=3.8"
 
 [project.scripts]
 nbexport = "nbexport.cli:main_export"
+nbimport = "nbexport.cli:main_import"
 nbwatch = "nbexport.cli:main_watch"
