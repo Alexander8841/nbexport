@@ -9,7 +9,8 @@
 ## Установка
 
 ```bash
-cd C:\Users\alexander\MyFiles\DS_Projects\nbexport
+git clone https://github.com/Alexander8841/nbexport.git
+cd nbexport
 pip install -e .
 ```
 
