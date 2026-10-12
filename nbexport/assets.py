@@ -3,12 +3,16 @@ import shutil
 import base64
 
 class AssetManager:
-    def __init__(self, notebook_path: str):
+    def __init__(self, notebook_path: str, custom_assets_dir: str = None):
         self.notebook_path = notebook_path
         self.notebook_dir = os.path.dirname(os.path.abspath(notebook_path))
         nb_name = os.path.splitext(os.path.basename(notebook_path))[0]
-        self.assets_dir_name = f"{nb_name}_exported_assets"
-        self.assets_dir_path = os.path.join(self.notebook_dir, self.assets_dir_name)
+        if custom_assets_dir:
+            self.assets_dir_path = os.path.abspath(custom_assets_dir)
+            self.assets_dir_name = os.path.basename(self.assets_dir_path)
+        else:
+            self.assets_dir_name = f"{nb_name}_exported_assets"
+            self.assets_dir_path = os.path.join(self.notebook_dir, self.assets_dir_name)
         self.has_assets = False
 
     def prepare_directory(self):
@@ -17,14 +21,17 @@ class AssetManager:
             try:
                 shutil.rmtree(self.assets_dir_path)
             except Exception:
-                pass # Игнорируем ошибки удаления, если файл занят
+                pass
         
     def _ensure_dir_exists(self):
         if not self.has_assets:
             os.makedirs(self.assets_dir_path, exist_ok=True)
             gitignore_path = os.path.join(self.assets_dir_path, '.gitignore')
-            with open(gitignore_path, 'w', encoding='utf-8') as f:
-                f.write("*\n")
+            try:
+                with open(gitignore_path, 'w', encoding='utf-8') as f:
+                    f.write("*\n")
+            except Exception:
+                pass
             self.has_assets = True
 
     def save_image(self, cell_idx: int, plot_idx: int, base64_data: str) -> str:
@@ -40,7 +47,11 @@ class AssetManager:
         except Exception:
             pass
             
-        return f"{self.assets_dir_name}/{filename}"
+        try:
+            rel = os.path.relpath(filepath, self.notebook_dir)
+            return rel.replace("\\", "/")
+        except Exception:
+            return f"{self.assets_dir_name}/{filename}"
 
     def save_text(self, cell_idx: int, text_content: str) -> str:
         """Сохраняет длинный текст и возвращает относительный путь."""
@@ -54,4 +65,8 @@ class AssetManager:
         except Exception:
             pass
             
-        return f"{self.assets_dir_name}/{filename}"
+        try:
+            rel = os.path.relpath(filepath, self.notebook_dir)
+            return rel.replace("\\", "/")
+        except Exception:
+            return f"{self.assets_dir_name}/{filename}"

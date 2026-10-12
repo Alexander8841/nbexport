@@ -23,7 +23,7 @@ class SyncHandler(FileSystemEventHandler):
 
     def is_ignored(self, path):
         parts = path.split(os.sep)
-        ignored = {'.git', '.venv', 'venv', '__pycache__', '.ipynb_checkpoints', '.vscode', '.idea', '_exported_assets', 'node_modules'}
+        ignored = {'.git', '.venv', 'venv', '__pycache__', '.ipynb_checkpoints', '.vscode', '.idea', '_exported_assets', 'node_modules', '.nbexport'}
         return any(p in ignored for p in parts)
 
     def process(self, event):
@@ -134,7 +134,7 @@ def find_file_recursively(target_name: str, root_dir: str = "."):
     matches = []
     
     for root, dirs, files in os.walk(root_dir):
-        dirs[:] = [d for d in dirs if d not in {'.git', '.venv', 'venv', '__pycache__', '.ipynb_checkpoints', '.vscode', '.idea', '_exported_assets', 'node_modules'}]
+        dirs[:] = [d for d in dirs if d not in {'.git', '.venv', 'venv', '__pycache__', '.ipynb_checkpoints', '.vscode', '.idea', '_exported_assets', 'node_modules', '.nbexport'}]
         
         for f in files:
             f_lower = f.lower()

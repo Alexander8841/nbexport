@@ -4,11 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nbexport"
-version = "0.2.0"
-description = "Bidirectional 2-way sync between Jupyter Notebooks and LLM-friendly Python scripts with outputs."
+version = "0.3.0"
+description = "Bidirectional 2-way sync and MCP server for Jupyter Notebooks with Headless Kernel Sessions."
 authors = [{name = "Alexander", email = "no-reply@gemini.com"}]
 dependencies = [
-    "watchdog>=3.0.0"
+    "watchdog>=3.0.0",
+    "mcp>=1.0.0",
+    "jupyter_client>=8.0.0"
 ]
 requires-python = ">=3.8"
 
@@ -16,3 +18,4 @@ requires-python = ">=3.8"
 nbexport = "nbexport.cli:main_export"
 nbimport = "nbexport.cli:main_import"
 nbwatch = "nbexport.cli:main_watch"
+nbexport-mcp = "nbexport.server:main"
