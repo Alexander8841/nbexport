@@ -12,7 +12,8 @@
 ## Установка
 
 ```bash
-cd C:\Users\alexander\MyFiles\DS_Projects\nbexport
+git clone https://github.com/Alexander8841/nbexport.git
+cd nbexport
 pip install -e .
 ```
 
@@ -26,7 +27,7 @@ pip install -e .
 {
   "mcpServers": {
     "nbexport": {
-      "command": "C:/Users/alexander/miniconda3/python.exe",
+      "command": "python",
       "args": ["-m", "nbexport.server"],
       "env": {
         "PYTHONUTF8": "1",
@@ -36,6 +37,8 @@ pip install -e .
   }
 }
 ```
+
+> **Примечание:** Если `python` не доступен в глобальном `PATH` или вы используете отдельное виртуальное окружение, укажите путь к интерпретатору этого окружения (например, `/path/to/venv/bin/python` или `C:/path/to/conda/python.exe`).
 
 ### Набор MCP-инструментов:
 
